@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import pdfplumber
+import pymupdf
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from pdf2docx import Converter
@@ -33,6 +34,52 @@ def merge_pdfs(inputs: list[Path], output: Path) -> None:
             writer.add_page(page)
     with output.open("wb") as fh:
         writer.write(fh)
+
+
+# Pengaturan kompresi: gambar di atas 200 DPI diperkecil ke 150 DPI (masih tajam di layar
+# dan cetak biasa), JPEG kualitas 80. Gambar beresolusi rendah tidak disentuh resolusinya.
+COMPRESS_DPI_THRESHOLD = 200
+COMPRESS_DPI_TARGET = 150
+COMPRESS_JPEG_QUALITY = 80
+
+
+def compress_pdf(pdf: Path, output: Path) -> tuple[int, int]:
+    """Kompres PDF sekecil mungkin tanpa membuat gambar buram.
+
+    Mencoba dua cara (hanya pembersihan lossless, lalu lossless + kompres ulang gambar)
+    dan memakai hasil terkecil. Bila tidak ada yang lebih kecil, file asli dikembalikan.
+    Mengembalikan (ukuran_awal, ukuran_akhir) dalam byte.
+    """
+    _ensure_pdf(pdf)
+    original = pdf.stat().st_size
+    candidates: list[Path] = []
+
+    def save(doc, path: Path) -> None:
+        doc.subset_fonts()
+        doc.save(str(path), garbage=4, clean=1, deflate=1, deflate_images=1,
+                 deflate_fonts=1, use_objstms=1, compression_effort=100)
+        candidates.append(path)
+
+    lossless = output.with_name("lossless.pdf")
+    with pymupdf.open(str(pdf)) as doc:
+        save(doc, lossless)
+
+    images = output.with_name("images.pdf")
+    with pymupdf.open(str(pdf)) as doc:
+        doc.rewrite_images(
+            dpi_threshold=COMPRESS_DPI_THRESHOLD,
+            dpi_target=COMPRESS_DPI_TARGET,
+            quality=COMPRESS_JPEG_QUALITY,
+            lossy=True, lossless=True, bitonal=True, color=True, gray=True,
+        )
+        save(doc, images)
+
+    best = min(candidates, key=lambda p: p.stat().st_size)
+    if best.stat().st_size >= original:
+        shutil.copyfile(pdf, output)
+    else:
+        best.replace(output)
+    return original, output.stat().st_size
 
 
 def pdf_to_word(pdf: Path, output: Path) -> None:

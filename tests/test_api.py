@@ -111,3 +111,42 @@ def test_excel_to_pdf():
     assert res.status_code == 200, res.text
     text = PdfReader(io.BytesIO(res.content)).pages[0].extract_text()
     assert "Produk" in text and "Buku" in text
+
+
+def make_image_pdf() -> bytes:
+    """PDF berisi foto 300 DPI (tidak terkompres) supaya ada yang bisa dikompres."""
+    import numpy as np
+    from PIL import Image
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader
+
+    rng = np.random.default_rng(0)
+    x = np.linspace(0, 1, 1800)
+    grad = np.outer(x, x[::-1]) * 255
+    rgb = np.stack([grad, grad[::-1], np.full_like(grad, 128)], axis=-1)
+    rgb += rng.normal(0, 6, rgb.shape)
+    img = Image.fromarray(np.clip(rgb, 0, 255).astype("uint8"))
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    c.drawString(72, 800, "Foto Aksara")
+    c.drawImage(ImageReader(img), 72, 150, width=432, height=432)  # 6 inci -> 300 DPI
+    c.save()
+    return buf.getvalue()
+
+
+def test_compress_shrinks_image_pdf():
+    src = make_image_pdf()
+    res = client.post("/api/compress", files={"file": ("foto.pdf", src, "application/pdf")})
+    assert res.status_code == 200, res.text
+    assert "foto_kompres.pdf" in res.headers["content-disposition"]
+    assert int(res.headers["x-original-size"]) == len(src)
+    assert len(res.content) < len(src) * 0.5
+    reader = PdfReader(io.BytesIO(res.content))
+    assert "Foto Aksara" in reader.pages[0].extract_text()
+
+
+def test_compress_never_grows_file():
+    src = make_pdf("Teks saja")
+    res = client.post("/api/compress", files={"file": ("teks.pdf", src, "application/pdf")})
+    assert res.status_code == 200, res.text
+    assert len(res.content) <= len(src)

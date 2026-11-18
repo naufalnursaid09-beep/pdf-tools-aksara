@@ -14,6 +14,7 @@ from . import converters
 from .converters import ConversionError
 
 MAX_FILE_MB = 50
+MAX_COMPRESS_MB = 500  # kompres boleh file besar
 MAX_FILES = 20
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -24,7 +25,8 @@ WORD_TYPES = {".doc", ".docx", ".odt", ".rtf"}
 EXCEL_TYPES = {".xls", ".xlsx", ".ods", ".csv"}
 
 
-async def _save(upload: UploadFile, workdir: Path, allowed: set[str], index: int = 0) -> Path:
+async def _save(upload: UploadFile, workdir: Path, allowed: set[str], index: int = 0,
+                max_mb: int = MAX_FILE_MB) -> Path:
     name = Path(upload.filename or "file").name
     ext = Path(name).suffix.lower()
     if ext not in allowed:
@@ -34,8 +36,8 @@ async def _save(upload: UploadFile, workdir: Path, allowed: set[str], index: int
     with dest.open("wb") as fh:
         while chunk := await upload.read(1024 * 1024):
             size += len(chunk)
-            if size > MAX_FILE_MB * 1024 * 1024:
-                raise HTTPException(413, f"Ukuran file maksimal {MAX_FILE_MB} MB.")
+            if size > max_mb * 1024 * 1024:
+                raise HTTPException(413, f"Ukuran file maksimal {max_mb} MB.")
             fh.write(chunk)
     if size == 0:
         raise HTTPException(400, f"File '{name}' kosong.")
@@ -95,13 +97,25 @@ async def merge(files: list[UploadFile] = File(...)):
     return _respond(out, "gabungan_aksara.pdf", wd, "application/pdf")
 
 
-async def _single(file: UploadFile, allowed: set[str]) -> tuple[Path, Path]:
+async def _single(file: UploadFile, allowed: set[str], max_mb: int = MAX_FILE_MB) -> tuple[Path, Path]:
     wd = _workdir()
     try:
-        return wd, await _save(file, wd, allowed)
+        return wd, await _save(file, wd, allowed, max_mb=max_mb)
     except HTTPException:
         shutil.rmtree(wd, ignore_errors=True)
         raise
+
+
+@app.post("/api/compress")
+async def compress(file: UploadFile = File(...)):
+    wd, src = await _single(file, PDF_TYPES, max_mb=MAX_COMPRESS_MB)
+    out = wd / "compressed.pdf"
+    before, after = _run(lambda: converters.compress_pdf(src, out), wd)
+    resp = _respond(out, f"{_stem(file)}_kompres.pdf", wd, "application/pdf")
+    resp.headers["X-Original-Size"] = str(before)
+    resp.headers["X-Compressed-Size"] = str(after)
+    resp.headers["Access-Control-Expose-Headers"] = "X-Original-Size, X-Compressed-Size"
+    return resp
 
 
 @app.post("/api/pdf-to-word")

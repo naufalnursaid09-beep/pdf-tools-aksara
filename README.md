@@ -5,6 +5,7 @@ Website alat PDF (mirip iLovePDF) dengan fitur:
 | Alat | Endpoint | Mesin |
 |---|---|---|
 | Gabung PDF | `POST /api/merge` (field `files`, min. 2) | pypdf |
+| Kompres PDF | `POST /api/compress` (maks. 500 MB) | PyMuPDF |
 | PDF ke Word (.docx) | `POST /api/pdf-to-word` | pdf2docx |
 | PDF ke Excel (.xlsx) | `POST /api/pdf-to-excel` | pdfplumber + openpyxl |
 | Word ke PDF | `POST /api/word-to-pdf` (.doc, .docx, .odt, .rtf) | LibreOffice headless |
@@ -12,7 +13,7 @@ Website alat PDF (mirip iLovePDF) dengan fitur:
 
 Backend memakai **FastAPI** (Python), frontend HTML/CSS/JS murni tanpa build step.
 File disimpan di folder sementara dan langsung dihapus setelah hasil dikirim.
-Batas: 50 MB per file, 20 file per penggabungan.
+Batas: 50 MB per file (500 MB untuk kompres), 20 file per penggabungan. Ubah di `app/main.py` bila perlu.
 
 ## Menjalankan secara lokal
 
@@ -46,6 +47,11 @@ pytest
 ```
 
 ## Catatan
+
+- Kompres PDF mencoba dua cara lalu memakai hasil terkecil: (1) pembersihan lossless (hapus objek
+  tak terpakai, subset font, kompres stream) dan (2) ditambah kompres ulang gambar. Gambar di atas
+  200 DPI diperkecil ke 150 DPI dengan JPEG kualitas 80, sehingga tetap tajam di layar dan cetak biasa.
+  Gambar beresolusi rendah tidak diperkecil. Bila hasil tidak lebih kecil, file asli yang dikembalikan.
 
 - PDF ke Excel mengambil tabel per halaman (satu sheet per tabel). Halaman tanpa tabel diekspor sebagai teks per baris.
 - PDF hasil scan (gambar) belum didukung untuk konversi ke Word/Excel karena butuh OCR.

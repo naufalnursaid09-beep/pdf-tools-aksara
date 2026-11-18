@@ -10,6 +10,15 @@ const TOOLS = {
     color: "#e5322d",
     icon: "⧉",
   },
+  "compress": {
+    title: "Kompres PDF",
+    desc: "Perkecil ukuran PDF semaksimal mungkin dengan gambar tetap tajam.",
+    accept: ".pdf",
+    run: "Kompres PDF",
+    endpoint: "/api/compress",
+    color: "#f08c00",
+    icon: "⇲",
+  },
   "pdf-to-word": {
     title: "PDF ke Word",
     desc: "Ubah PDF menjadi dokumen Word (DOCX) yang bisa diedit.",
@@ -159,7 +168,16 @@ async function run() {
     const name = filenameFrom(res.headers.get("Content-Disposition")) || "hasil";
     const url = URL.createObjectURL(blob);
     triggerDownload(url, name);
-    setStatus("success", `Selesai! File <b>${escapeHtml(name)}</b> sudah diunduh. <a href="${url}" download="${escapeHtml(name)}">Unduh lagi</a>`);
+    const before = Number(res.headers.get("X-Original-Size"));
+    const after = Number(res.headers.get("X-Compressed-Size"));
+    let extra = "";
+    if (before && after) {
+      const saved = Math.round((1 - after / before) * 100);
+      extra = saved > 0
+        ? `<br>Ukuran turun <b>${saved}%</b>: ${formatSize(before)} &rarr; ${formatSize(after)}`
+        : `<br>PDF ini sudah sangat ringkas, jadi ukurannya tidak bisa diperkecil lagi tanpa menurunkan kualitas (${formatSize(before)}).`;
+    }
+    setStatus("success", `Selesai! File <b>${escapeHtml(name)}</b> sudah diunduh. <a href="${url}" download="${escapeHtml(name)}">Unduh lagi</a>${extra}`);
   } catch (err) {
     setStatus("error", escapeHtml(err.message || "Terjadi kesalahan."));
   } finally {
