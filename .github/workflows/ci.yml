@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Pasang LibreOffice
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-calc
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t pdf-tools-aksara .
+      - name: Jalankan dan cek health
+        run: |
+          docker run -d -p 8000:10000 -e PORT=10000 --name app pdf-tools-aksara
+          for i in $(seq 1 30); do curl -fs localhost:8000/api/health && exit 0; sleep 2; done
+          docker logs app; exit 1

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gabung PDF · PDF tools by Aksara</title>
+  <meta name="description" content="Gabungkan PDF langsung di browser. File tidak diunggah ke mana pun.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23e5322d'/><text x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>A</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .privacy { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--success); border: 1px solid var(--success); border-radius: 999px; padding: 4px 12px; }
+    .more { margin-top: 48px; }
+    .more h2 { font-size: 20px; text-align: center; margin: 0 0 6px; }
+    .more > p { text-align: center; color: var(--muted); margin: 0 0 20px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="./" class="brand"><span class="logo">A</span><span>PDF tools <small>by Aksara</small></span></a>
+    <nav class="nav" id="nav"></nav>
+  </header>
+
+  <main>
+    <div class="tool-head">
+      <h1>Gabung PDF</h1>
+      <p>Gabungkan beberapa PDF menjadi satu file. Atur urutannya sesuai keinginan.</p>
+      <span class="privacy">🔒 Diproses di perangkatmu, file tidak diunggah ke mana pun</span>
+    </div>
+
+    <div id="dropzone" class="dropzone" tabindex="0">
+      <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple hidden>
+      <div class="drop-inner">
+        <button type="button" class="btn btn-primary btn-lg" id="pickBtn">Pilih file PDF</button>
+        <p>atau tarik dan lepas file di sini</p>
+        <p class="hint">Format: .pdf · bisa banyak file</p>
+      </div>
+    </div>
+
+    <ul id="fileList" class="file-list"></ul>
+
+    <div class="actions hidden" id="actions">
+      <button type="button" class="btn btn-ghost" id="addMoreBtn">+ Tambah file</button>
+      <button type="button" class="btn btn-primary btn-lg" id="runBtn">Gabungkan PDF</button>
+    </div>
+
+    <div id="status" class="status hidden" role="status"></div>
+
+    <section class="more">
+      <h2>Butuh alat lain?</h2>
+      <p>Kompres dan konversi Word/Excel tersedia di versi lengkap.</p>
+      <div class="grid" id="moreGrid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    &copy; <span id="year"></span> PDF tools by Aksara.
+  </footer>
+
+  <script src="vendor/pdf-lib.min.js"></script>
+  <script src="pages.js"></script>
+</body>
+</html>
