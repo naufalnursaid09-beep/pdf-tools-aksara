@@ -52,6 +52,20 @@ Setiap push ke `main` akan otomatis di-deploy ulang. Paket gratis Render "tidur"
 pengunjung, jadi akses pertama setelahnya butuh sekitar 1 menit untuk bangun. Paket gratis juga hanya
 punya RAM 512 MB, jadi file yang sangat besar lebih aman diproses di paket berbayar.
 
+## Versi GitHub Pages (gabung PDF di browser)
+
+Folder `pages/` berisi versi ringan yang hanya punya fitur **Gabung PDF** dan berjalan sepenuhnya di
+browser (pdf-lib), jadi file pengguna tidak pernah diunggah. Alat lain di halaman itu menautkan ke versi
+lengkap; ubah `FULL_SITE_URL` di `pages/pages.js` bila alamat Render-nya berbeda.
+
+Mengaktifkan:
+1. GitHub Pages di akun gratis butuh repo **public** (atau GitHub Pro untuk repo private).
+2. Buka **Settings → Pages**, lalu pada **Source** pilih **GitHub Actions**.
+3. Push ke `main` (atau jalankan workflow *Deploy GitHub Pages* secara manual). Situs muncul di
+   `https://<username>.github.io/pdf-tools-aksara/`.
+
+Coba lokal: `mkdir -p _site && cp -r pages/. _site/ && cp static/style.css _site/ && python -m http.server -d _site`
+
 ## Tes
 
 ```bash
