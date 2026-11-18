@@ -39,6 +39,19 @@ docker build -t pdf-tools-aksara .
 docker run -p 8000:8000 pdf-tools-aksara
 ```
 
+## Deploy online (Render, gratis)
+
+Repo ini sudah berisi `render.yaml`, jadi Render bisa membangun dan menjalankan situsnya otomatis.
+
+1. Daftar atau masuk di https://render.com memakai akun GitHub.
+2. Klik **New** → **Blueprint**, lalu izinkan Render mengakses repo `pdf-tools-aksara`.
+3. Pilih repo ini dan klik **Apply**. Render membangun image Docker (sekitar 5 sampai 10 menit).
+4. Setelah selesai, situs bisa dibuka di `https://pdf-tools-aksara.onrender.com` (atau nama yang diberikan Render).
+
+Setiap push ke `main` akan otomatis di-deploy ulang. Paket gratis Render "tidur" setelah 15 menit tanpa
+pengunjung, jadi akses pertama setelahnya butuh sekitar 1 menit untuk bangun. Paket gratis juga hanya
+punya RAM 512 MB, jadi file yang sangat besar lebih aman diproses di paket berbayar.
+
 ## Tes
 
 ```bash

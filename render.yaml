@@ -1,0 +1,10 @@
+# Blueprint Render: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: pdf-tools-aksara
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
